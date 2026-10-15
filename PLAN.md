@@ -44,6 +44,9 @@ Code should be clean, scalable, and easy to extend by someone still learning Mod
 
 - **Milestone 2 done (2026-10-15):** `run_design.py` ran PD-L1 on an A100 on Modal; 2 designs accepted from 8 trajectories; outputs in `inceptive-runs/pdl1_denovo_test/design/`. Weights cached in `alphafold2-weights`.
 
+- **Config layout (decided):** one YAML per run in a flat `configs/` folder, with sections `design:`, `selection:`, `validate:` and a shared top-level `run_name`. Each step script reads only its own section. This replaces the earlier `configs/design|validate|pipeline` split described in sections 3 and 4 below.
+- **Milestone 3 built (not yet run):** `run_validation.py` builds the Optimus CSV on Modal (CPU) from `3_Ranked`, then launches Optimus's own `modal_run_validation.py` with `OPTIMUS_OUTPUTS_VOLUME=inceptive-runs`; results go to `<run_name>/validation/`.
+
 ## 1. Goal
 
 One command takes a target and a design config, runs **BindCraft2 (BC2)** on a Modal GPU to produce ranked binders, then automatically feeds the survivors into **Optimus** for independent multi-model, multi-seed structure validation on Modal. All persistent state lives on a Modal Volume.
