@@ -1,8 +1,8 @@
 """Step 1: run BindCraft2 on a Modal GPU.
 
 Usage:
-    python -m modal run run_design.py --config configs/design/pdl1_denovo_test.yaml
-    python -m modal run run_design.py --config configs/design/pdl1_denovo_test.yaml --dry-run
+    python -m modal run run_design.py --config configs/pdl1_denovo_test.yaml
+    python -m modal run run_design.py --config configs/pdl1_denovo_test.yaml --dry-run
 
 Results are saved on the `inceptive-runs` Volume under <run_name>/design/.
 Re-running with the same run_name resumes where BindCraft2 left off.
@@ -58,19 +58,21 @@ def design(run_name: str, bindcraft_settings: dict):
 @app.local_entrypoint()
 def main(config: str, dry_run: bool = False):
     cfg = load_config(config)
-    require_keys(cfg, ["run_name", "gpu", "timeout_hours", "bindcraft"], where=config)
+    require_keys(cfg, ["run_name", "design"], where=config)
+    run_name, design_cfg = cfg["run_name"], cfg["design"]
+    require_keys(design_cfg, ["gpu", "timeout_hours", "bindcraft"], where="design section")
 
-    print(f"Run name : {cfg['run_name']}")
-    print(f"GPU      : {cfg['gpu']}   timeout: {cfg['timeout_hours']} h")
-    print(f"BindCraft2 settings:\n{json.dumps(cfg['bindcraft'], indent=2)}")
+    print(f"Run name : {run_name}")
+    print(f"GPU      : {design_cfg['gpu']}   timeout: {design_cfg['timeout_hours']} h")
+    print(f"BindCraft2 settings:\n{json.dumps(design_cfg['bindcraft'], indent=2)}")
     if dry_run:
         print("Dry run, nothing launched.")
         return
 
     # with_options sets the GPU and timeout from the config instead of the code.
     remote_design = design.with_options(
-        gpu=cfg["gpu"], timeout=int(cfg["timeout_hours"] * 3600)
+        gpu=design_cfg["gpu"], timeout=int(design_cfg["timeout_hours"] * 3600)
     )
-    out = remote_design.remote(cfg["run_name"], cfg["bindcraft"])
+    out = remote_design.remote(run_name, design_cfg["bindcraft"])
     print(f"Done. Results on Volume 'inceptive-runs' at {out}")
-    print(f"Download with: python -m modal volume get inceptive-runs {cfg['run_name']} ./results")
+    print(f"Download with: python -m modal volume get inceptive-runs {run_name} ./results")

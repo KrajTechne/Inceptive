@@ -1,2 +1,7 @@
 modal
 pyyaml
+# Needed on your machine because Optimus checks its input locally before launching
+biotite
+gemmi
+pandas
+numpy
