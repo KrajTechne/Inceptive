@@ -34,3 +34,11 @@ validate:
   seeds: [0]
   num_samples: 5
   gpu_type: H100
+
+# ---- Step 4: final report (report.py) ----
+# A design "passes validation" when EVERY validation model meets all three thresholds.
+# Defaults follow Optimus's own gates.
+report:
+  min_iptm: 0.8
+  min_ipsae: 0.61
+  min_contact_pass_fraction: 1.0
