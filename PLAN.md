@@ -28,7 +28,7 @@ Code should be clean, scalable, and easy to extend by someone still learning Mod
 - **AlphaFold params (5.3 GB)** are not in the package. Either bake them into the image (`bindcraft fetch-weights` at build) or cache on a Volume via `BINDCRAFT_WEIGHTS` / `BINDCRAFT_AF2_PARAMS`. Plan: a **weights Volume**, so the image stays small and weights download once.
 - Built-in target `hPDL1` (settings/target + bundled structure), so no target PDB is needed for the first test. `examples/pdl1_denovo.json` is the miniprotein example (binder_lengths 60-100, `max_trajectories` 40, `number_of_final_designs` 10).
 - No CPU mode, so the design step always needs a GPU. It fans out one worker per visible GPU; a multi-GPU Modal request (`gpu="H100:4"`) should therefore scale it with no code changes.
-- Output layout confirmed in code: `1_Trajectories`, `2_Refolded`, `3_Ranked` with `!_Ranked.csv`; accepted designs are written as `.cif`. Binder chain is **B** in BC2 output (per user); pass `--binder_chain B` to `designs_from_structures.py` (default is A). Verify once on the first real output.
+- Output layout confirmed in code: `1_Trajectories`, `2_Refolded`, `3_Ranked` with `!_Ranked.csv`; accepted designs are written as `.cif`. Binder chain is **B** in BC2 output (per user); pass `--binder_chain B` to `designs_from_structures.py` (default is A). **Verified** on the first real run: binder = chain B (length matches the design name), target hPDL1 = chain A (115 residues).
 
 **Optimus** (submodule `optimus/` @ `cd79d09`)
 - Findings are in the previous discussion: the local CSV input, the fire-and-forget CLI, hardcoded app and Volume names, and unpinned deps.
@@ -41,6 +41,8 @@ Code should be clean, scalable, and easy to extend by someone still learning Mod
 - Optimus validation is launched by `run_validation.py`. The one change needed in Optimus is letting `run_validation` read its CSV from the Volume (milestone 3).
 
 - Submodules are committed as pointers only. After cloning use `git clone --recurse-submodules`. Repo lives in OneDrive, which can corrupt `.git`; move it out if git errors appear.
+
+- **Milestone 2 done (2026-10-15):** `run_design.py` ran PD-L1 on an A100 on Modal; 2 designs accepted from 8 trajectories; outputs in `inceptive-runs/pdl1_denovo_test/design/`. Weights cached in `alphafold2-weights`.
 
 ## 1. Goal
 

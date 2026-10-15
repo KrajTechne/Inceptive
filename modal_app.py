@@ -38,4 +38,8 @@ bindcraft_image = (
     )
     # Make BindCraft2 keep its AlphaFold weights (5.3 GB) on the weights Volume.
     .env({"BINDCRAFT_WEIGHTS": f"{WEIGHTS_DIR}/bindcraft"})
+    # run_design.py imports these at the top, so the container needs them too
+    # (Modal only copies the entrypoint file by itself). Keep this line last.
+    .pip_install("pyyaml")
+    .add_local_python_source("config_loader", "modal_app")
 )
