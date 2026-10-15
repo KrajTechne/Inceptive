@@ -64,15 +64,21 @@ def main(config: str, dry_run: bool = False):
 
     print(f"Run name : {run_name}")
     print(f"GPU      : {design_cfg['gpu']}   timeout: {design_cfg['timeout_hours']} h")
+
+    # with_options sets compute from the config instead of the code. cpu and memory_gb are
+    # optional; set them for multi-GPU runs (see configs/pdl1_parallel_test.yaml).
+    options = {"gpu": design_cfg["gpu"], "timeout": int(design_cfg["timeout_hours"] * 3600)}
+    if "cpu" in design_cfg:
+        options["cpu"] = design_cfg["cpu"]
+    if "memory_gb" in design_cfg:
+        options["memory"] = int(design_cfg["memory_gb"] * 1024)  # Modal wants MiB
+    print(f"Modal options: {options}")
     print(f"BindCraft2 settings:\n{json.dumps(design_cfg['bindcraft'], indent=2)}")
     if dry_run:
         print("Dry run, nothing launched.")
         return
 
-    # with_options sets the GPU and timeout from the config instead of the code.
-    remote_design = design.with_options(
-        gpu=design_cfg["gpu"], timeout=int(design_cfg["timeout_hours"] * 3600)
-    )
+    remote_design = design.with_options(**options)
     out = remote_design.remote(run_name, design_cfg["bindcraft"])
     print(f"Done. Results on Volume 'inceptive-runs' at {out}")
     print(f"Download with: python -m modal volume get inceptive-runs {run_name} ./results")
