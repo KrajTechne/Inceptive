@@ -1,0 +1,6 @@
+[submodule "bindcraft2"]
+	path = bindcraft2
+	url = https://github.com/PacesaLab/BindCraft2.git
+[submodule "optimus"]
+	path = optimus
+	url = https://github.com/KrajTechne/Optimus.git
