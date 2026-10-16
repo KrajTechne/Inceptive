@@ -1,0 +1,22 @@
+{
+  "targets": [
+    {
+      "name": "interferon_gamma_heterodimer",
+      "target_path": "/content/drive/MyDrive/BC2/targets/interferon_gamma_heterodimer.cif",
+      "chains": "A",
+      "coldspots" : "11-25,55-67,99-107,131-145,175-187,219-227"
+    }
+  ],
+  "number_of_final_designs": 4,
+  "modality": "binder",
+  "binder_lengths": [
+    60,
+    100
+  ],
+  "save_loss_plots": false,
+  "save_design_animations": true,
+  "length_bucket_size": 32,
+  "workers_per_gpu": 1,
+  "auto_multi_gpu": false,
+  "project_folder": "/content/drive/MyDrive/BC2/results/interferon_gamma_heterodimer_trial"
+}

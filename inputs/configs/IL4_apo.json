@@ -1,0 +1,22 @@
+{
+  "targets": [
+    {
+      "name": "IL4_apo",
+      "target_path": "/content/drive/MyDrive/BC2/targets/IL4_apo.cif",
+      "chains": "A",
+      "coldspots" : "5-13,81-92"
+    }
+  ],
+  "number_of_final_designs": 4,
+  "modality": "binder",
+  "binder_lengths": [
+    60,
+    100
+  ],
+  "save_loss_plots": false,
+  "save_design_animations": true,
+  "length_bucket_size": 32,
+  "workers_per_gpu": 1,
+  "auto_multi_gpu": false,
+  "project_folder": "/content/drive/MyDrive/BC2/results/IL4_trial"
+}
