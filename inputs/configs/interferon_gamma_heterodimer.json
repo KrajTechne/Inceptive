@@ -2,7 +2,7 @@
   "targets": [
     {
       "name": "interferon_gamma_heterodimer",
-      "target_path": "/content/drive/MyDrive/BC2/targets/interferon_gamma_heterodimer.cif",
+      "target_path": "../targets/interferon_gamma_heterodimer.cif",
       "chains": "A",
       "coldspots" : "11-25,55-67,99-107,131-145,175-187,219-227"
     }

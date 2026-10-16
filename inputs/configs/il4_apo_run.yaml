@@ -9,10 +9,9 @@ design:
   bindcraft_json: inputs/configs/IL4_apo.json   # base BindCraft2 settings (paths inside it are ignored)
   gpu: A100
   timeout_hours: 3
-  # Anything under `bindcraft:` overrides the same key in the JSON, e.g.
-  # bindcraft:
-  #   number_of_final_designs: 10
-  #   max_trajectories: 100
+  # Anything under `bindcraft:` overrides the same key in the JSON.
+  bindcraft:
+    max_trajectories: 10     # small cap for a first trial run
 
 selection:
   top_n: 4                   # best N designs from BindCraft2's 3_Ranked/!_Ranked.csv

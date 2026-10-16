@@ -2,7 +2,7 @@
   "targets": [
     {
       "name": "IL4_apo",
-      "target_path": "/content/drive/MyDrive/BC2/targets/IL4_apo.cif",
+      "target_path": "../targets/IL4_apo.cif",
       "chains": "A",
       "coldspots" : "5-13,81-92"
     }
@@ -18,5 +18,4 @@
   "length_bucket_size": 32,
   "workers_per_gpu": 1,
   "auto_multi_gpu": false,
-  "project_folder": "/content/drive/MyDrive/BC2/results/IL4_trial"
 }
