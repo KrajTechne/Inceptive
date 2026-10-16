@@ -25,7 +25,7 @@ run_pipeline.py chains the three and waits for validation to finish.
 ## 2. Decisions
 
 - **Tools as git submodules**: `bindcraft2/` and `optimus/`, pinned to commits (pointer only in our repo). Clone with `--recurse-submodules`.
-- **Flat repo**: scripts at the top level; `inputs/` (with `configs/` and `structures/`) is the only structured folder, reorganized by the user on 2026-10-16.
+- **Flat repo**: scripts at the top level; `inputs/` (with `configs/` and `targets/`) is the only structured folder, reorganized by the user on 2026-10-16.
 - **One YAML per run** with sections `design`, `selection`, `validate`, `report` and a shared `run_name`. Each step reads only its own section. Tool-specific settings pass straight through (`design.bindcraft` → BindCraft2 settings JSON; `validate` → Optimus `--config`), so we do not re-model their schemas.
 - **Volumes**: `inceptive-runs` (everything per run) and `alphafold2-weights` (AF2 parameters, downloaded once).
 - **Validation models**: OpenFold3 (`of3`) + ESMFold2. AF3 weights are not used (licensing).
@@ -44,7 +44,7 @@ run_pipeline.py chains the three and waits for validation to finish.
 | `run_pipeline.py` | Runs steps in order; waits by counting finished jobs (results + failures rows) vs expected |
 | `config_loader.py`, `volume_utils.py` | YAML loading; `modal volume get/put` helpers |
 | `inputs/configs/` | Run YAMLs (`pdl1_*`, `il4_apo_run.yaml`, `ifng_heterodimer_run.yaml`) and BindCraft2 settings JSONs (`IL4_apo.json`, `interferon_gamma_heterodimer.json`) |
-| `inputs/structures/` | Target `.cif`/`.pdb` files; mounted into the design container at start-up (no image rebuild) |
+| `inputs/targets/` | Target `.cif`/`.pdb` files; mounted into the design container at start-up (no image rebuild) |
 
 ## 4. Facts learned along the way
 
@@ -80,7 +80,7 @@ run_pipeline.py chains the three and waits for validation to finish.
 ## 6. Next steps
 
 1. **Run `inputs/configs/pdl1_parallel_test.yaml`** (4×A100). Check in the log: the `campaign fan-out` line lists workers across GPUs 0–3, `nvidia-smi`-style memory notes, and throughput vs the 1-GPU run (trajectories per hour). If a worker runs out of GPU memory, set `workers_per_gpu: 1` or 2 in `design.bindcraft`.
-2. **New targets (IL-4 apo, IFN-γ heterodimer)**: wiring done (2026-10-16): `design.bindcraft_json` loads the user's JSON, structures are found by file name in `inputs/structures/`, run YAML keys override JSON keys. Open items before the first real runs: (a) IFN-γ JSON targets chain A only of a two-chain file (A 243 res, B 242 res, numbering starts at 0): confirm that is intended and that the coldspot numbers match BindCraft2's numbering; (b) Colab leftovers `workers_per_gpu: 1` / `auto_multi_gpu: false` keep design on one GPU, so override them for parallel runs; (c) confirm the binder chain letter in the output (`selection.binder_chain`) for the two-chain target.
+2. **New targets (IL-4 apo, IFN-γ heterodimer)**: wiring done (2026-10-16): `design.bindcraft_json` loads the user's JSON, structures are found by file name in `inputs/targets/`, run YAML keys override JSON keys. Open items before the first real runs: (a) IFN-γ JSON targets chain A only of a two-chain file (A 243 res, B 242 res, numbering starts at 0): confirm that is intended and that the coldspot numbers match BindCraft2's numbering; (b) Colab leftovers `workers_per_gpu: 1` / `auto_multi_gpu: false` keep design on one GPU, so override them for parallel runs; (c) confirm the binder chain letter in the output (`selection.binder_chain`) for the two-chain target.
 3. **Other modalities** (VHH, cyclic peptide, scFv): confirm the bridge's chain assignment and sequence extraction on real output, since Optimus's script does not special-case them. Multi-chain binders (e.g. oligomers) would need the same check.
 4. **Optimus follow-ups (user's repo)**: add `.gitattributes` with `*.sh text eol=lf`; pin the unpinned dependencies; optionally let `run_validation` read its CSV from a Volume so our wrapper no longer needs a local round trip.
 5. **Hardening**: retries on preemption for the design function (BindCraft2 resumes, so retrying is safe); a cost estimate in `--dry-run`; per-run cleanup of large intermediate folders (`compile_cache`, `1_Trajectories`) if Volume size becomes an issue.

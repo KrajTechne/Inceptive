@@ -1,5 +1,5 @@
 # Interferon-gamma heterodimer binder design. BindCraft2 settings: interferon_gamma_heterodimer.json;
-# target structure: inputs/structures/interferon_gamma_heterodimer.cif (found by file name).
+# target structure: inputs/targets/interferon_gamma_heterodimer.cif (found by file name).
 #   python run_pipeline.py --config inputs/configs/ifng_heterodimer_run.yaml --dry-run
 
 run_name: ifng_heterodimer_trial

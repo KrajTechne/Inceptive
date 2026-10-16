@@ -12,7 +12,7 @@ import os
 import subprocess
 
 from config_loader import load_config, require_keys
-from modal_app import (LOCAL_STRUCTURES_DIR, RUNS_DIR, STRUCTURES_DIR, WEIGHTS_DIR,
+from modal_app import (LOCAL_TARGETS_DIR, RUNS_DIR, TARGETS_DIR, WEIGHTS_DIR,
                        app, bindcraft_image, runs_volume, weights_volume)
 
 COMMIT_EVERY_SECONDS = 300  # save progress to the Volume this often
@@ -57,7 +57,7 @@ def design(run_name: str, bindcraft_settings: dict):
 def build_bindcraft_settings(design_cfg):
     """Settings for BindCraft2 = the optional JSON file, then the `bindcraft:` section on top.
 
-    Target structures are found by FILE NAME in inputs/structures/, so the paths written
+    Target structures are found by FILE NAME in inputs/targets/, so the paths written
     inside a JSON (for example from Colab) do not matter. project_folder is always set
     by run_design, whatever the JSON says.
     """
@@ -71,10 +71,10 @@ def build_bindcraft_settings(design_cfg):
         if "target_path" not in target:
             continue
         file_name = os.path.basename(str(target["target_path"]).replace("\\", "/"))
-        if not os.path.exists(os.path.join(LOCAL_STRUCTURES_DIR, file_name)):
+        if not os.path.exists(os.path.join(LOCAL_TARGETS_DIR, file_name)):
             raise FileNotFoundError(f"Target structure '{file_name}' (target '{target.get('name')}') "
-                                    f"is not in {LOCAL_STRUCTURES_DIR}/. Put the file there.")
-        target["target_path"] = f"{STRUCTURES_DIR}/{file_name}"
+                                    f"is not in {LOCAL_TARGETS_DIR}/. Put the file there.")
+        target["target_path"] = f"{TARGETS_DIR}/{file_name}"
         print(f"Target structure: {file_name} -> {target['target_path']}")
     settings.pop("project_folder", None)  # set automatically in the container
     return settings

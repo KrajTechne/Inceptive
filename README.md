@@ -62,12 +62,12 @@ To start a new campaign, copy `inputs/configs/pdl1_denovo_test.yaml`, change `ru
 
 ### Adding a new target
 
-1. Put the structure (`.cif` or `.pdb`) in `inputs/structures/`.
+1. Put the structure (`.cif` or `.pdb`) in `inputs/targets/`.
 2. Put the BindCraft2 settings JSON (a `targets:` list with `name`, `target_path`, `chains`, `hotspots`/`coldspots`, plus campaign settings) in `inputs/configs/`.
 3. Copy a run YAML such as `inputs/configs/il4_apo_run.yaml` and point `design.bindcraft_json` at the JSON.
 
 Notes on how the JSON is used:
-- **Structures are found by file name** in `inputs/structures/`. The directory written in `target_path` (for example a Colab or Drive path) and any `project_folder` are ignored and replaced automatically.
+- **Structures are found by file name** in `inputs/targets/`. The directory written in `target_path` (for example a Colab or Drive path) and any `project_folder` are ignored and replaced automatically.
 - Keys under `design.bindcraft:` in the run YAML override the same keys in the JSON. This matters for Colab leftovers: `workers_per_gpu: 1` and `auto_multi_gpu: false` keep BindCraft2 on one worker and one GPU, so override them (for example `auto_multi_gpu: true`, `workers_per_gpu: auto`) when you ask for several GPUs.
 - Residue numbers in `hotspots` / `coldspots` follow BindCraft2's numbering of the structure you supplied. Check them if a structure does not start at residue 1.
 - `selection.binder_chain` is the chain BindCraft2 gives the binder in its output files (`B` when the target is the single chain `A`); check it on the first run of a target with several chains.
@@ -108,7 +108,7 @@ Run links are also printed when a step starts (`https://modal.com/apps/...`), wh
 | `run_pipeline.py` | Runs the steps in order and waits for validation to finish. |
 | `config_loader.py`, `volume_utils.py` | Small helpers (read YAML; copy files to/from the Volume). |
 | `inputs/configs/` | One run YAML per run, plus BindCraft2 settings JSONs for each target. |
-| `inputs/structures/` | Target structure files (`.cif` / `.pdb`). |
+| `inputs/targets/` | Target structure files (`.cif` / `.pdb`). |
 
 ## Adding a step or a tool
 

@@ -18,10 +18,10 @@ weights_volume = modal.Volume.from_name("alphafold2-weights", create_if_missing=
 RUNS_DIR = "/runs"        # one subfolder per run: /runs/<run_name>/...
 WEIGHTS_DIR = "/weights"  # model weights, downloaded once and reused
 
-# Target structures (.cif/.pdb) you put in inputs/structures/ are copied into the
+# Target structures (.cif/.pdb) you put in inputs/targets/ are copied into the
 # design container at start-up, so a new structure never triggers an image rebuild.
-LOCAL_STRUCTURES_DIR = "inputs/structures"   # on your computer
-STRUCTURES_DIR = "/inputs/structures"        # inside the container
+LOCAL_TARGETS_DIR = "inputs/targets"   # on your computer
+TARGETS_DIR = "/inputs/targets"        # inside the container
 
 # --- BindCraft2 image -------------------------------------------------------
 # An Image is the container recipe. This follows bindcraft2/containers/Dockerfile.
@@ -48,7 +48,7 @@ bindcraft_image = (
     # (Modal only copies the entrypoint file by itself). Keep this line last.
     .pip_install("pyyaml")
     .add_local_python_source("config_loader", "modal_app")
-    .add_local_dir(LOCAL_STRUCTURES_DIR, STRUCTURES_DIR)
+    .add_local_dir(LOCAL_TARGETS_DIR, TARGETS_DIR)
 )
 
 # --- Bridge image (CPU only) ------------------------------------------------

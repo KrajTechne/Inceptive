@@ -17,5 +17,5 @@
   "save_design_animations": true,
   "length_bucket_size": 32,
   "workers_per_gpu": 1,
-  "auto_multi_gpu": false,
+  "auto_multi_gpu": false
 }

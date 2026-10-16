@@ -1,5 +1,5 @@
 # IL-4 (apo) binder design. The BindCraft2 settings live in IL4_apo.json (next to this file);
-# the target structure is inputs/structures/IL4_apo.cif (found by file name).
+# the target structure is inputs/targets/IL4_apo.cif (found by file name).
 #   python run_pipeline.py --config inputs/configs/il4_apo_run.yaml --dry-run
 #   python run_pipeline.py --config inputs/configs/il4_apo_run.yaml
 
