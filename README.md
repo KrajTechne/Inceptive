@@ -5,7 +5,7 @@ Protein design with BindCraft2, RFDiffusion, etc. and leverages Optimus for Opti
 A protein binder design pipeline that runs on [Modal](https://modal.com):
 
 ```
-configs/<run>.yaml
+inputs/configs/<run>.yaml
    │
    ├─ run_design.py      BindCraft2 designs binders on a GPU
    ├─ run_validation.py  picks the top designs, Optimus re-predicts them with other models
@@ -30,16 +30,16 @@ modal setup                                    # log in to Modal (once)
 ## Run it
 
 ```bash
-python run_pipeline.py --config configs/pdl1_denovo_test.yaml --dry-run   # show the plan, run nothing
-python run_pipeline.py --config configs/pdl1_denovo_test.yaml             # run everything
+python run_pipeline.py --config inputs/configs/pdl1_denovo_test.yaml --dry-run   # show the plan, run nothing
+python run_pipeline.py --config inputs/configs/pdl1_denovo_test.yaml             # run everything
 ```
 
 Or one step at a time (each takes the same config file and has `--dry-run`):
 
 ```bash
-python -m modal run run_design.py     --config configs/pdl1_denovo_test.yaml
-python -m modal run run_validation.py --config configs/pdl1_denovo_test.yaml
-python report.py                      --config configs/pdl1_denovo_test.yaml
+python -m modal run run_design.py     --config inputs/configs/pdl1_denovo_test.yaml
+python -m modal run run_validation.py --config inputs/configs/pdl1_denovo_test.yaml
+python report.py                      --config inputs/configs/pdl1_denovo_test.yaml
 ```
 
 `run_pipeline.py` also accepts `--skip-design` and `--skip-validation` to reuse finished results.
@@ -48,17 +48,29 @@ python report.py                      --config configs/pdl1_denovo_test.yaml
 
 ## The config file
 
-One YAML per run, in `configs/`. Each step reads its own section; `run_name` is shared and names the folder where everything is stored.
+One YAML per run, in `inputs/configs/`. Each step reads its own section; `run_name` is shared and names the folder where everything is stored.
 
 | Section | Used by | What it does |
 |---|---|---|
 | `run_name` | all steps | Results go to `<run_name>/` on the Volume and `results/<run_name>/` locally. |
-| `design` | `run_design.py` | `gpu`, `timeout_hours`, and `bindcraft:` which is passed straight to BindCraft2 as its settings (any key from `bindcraft2/examples/*.json`). |
+| `design` | `run_design.py` | `gpu` (e.g. `A100`, or `A100:4` for 4 GPUs), `timeout_hours`, optional `cpu` / `memory_gb`, and the BindCraft2 settings: `bindcraft_json:` (path to a BindCraft2 settings JSON) and/or `bindcraft:` (inline; wins over the JSON). See "Adding a new target". |
 | `selection` | `run_validation.py` | `top_n` best designs to validate, and `binder_chain` (BindCraft2 writes the binder as chain `B`, target as `A`). |
 | `validate` | `run_validation.py` | Passed straight to Optimus as its config: `models` (`of3`, `native_af3`, `esmfold2`), `seeds`, `num_samples`, `gpu_type`, etc. |
 | `report` | `report.py` | Pass thresholds: `min_iptm`, `min_ipsae`, `min_contact_pass_fraction`. A design passes if every model meets all three. |
 
-To start a new campaign, copy `configs/pdl1_denovo_test.yaml`, change `run_name` and the settings.
+To start a new campaign, copy `inputs/configs/pdl1_denovo_test.yaml`, change `run_name` and the settings.
+
+### Adding a new target
+
+1. Put the structure (`.cif` or `.pdb`) in `inputs/structures/`.
+2. Put the BindCraft2 settings JSON (a `targets:` list with `name`, `target_path`, `chains`, `hotspots`/`coldspots`, plus campaign settings) in `inputs/configs/`.
+3. Copy a run YAML such as `inputs/configs/il4_apo_run.yaml` and point `design.bindcraft_json` at the JSON.
+
+Notes on how the JSON is used:
+- **Structures are found by file name** in `inputs/structures/`. The directory written in `target_path` (for example a Colab or Drive path) and any `project_folder` are ignored and replaced automatically.
+- Keys under `design.bindcraft:` in the run YAML override the same keys in the JSON. This matters for Colab leftovers: `workers_per_gpu: 1` and `auto_multi_gpu: false` keep BindCraft2 on one worker and one GPU, so override them (for example `auto_multi_gpu: true`, `workers_per_gpu: auto`) when you ask for several GPUs.
+- Residue numbers in `hotspots` / `coldspots` follow BindCraft2's numbering of the structure you supplied. Check them if a structure does not start at residue 1.
+- `selection.binder_chain` is the chain BindCraft2 gives the binder in its output files (`B` when the target is the single chain `A`); check it on the first run of a target with several chains.
 
 ## Where things are stored
 
@@ -95,7 +107,8 @@ Run links are also printed when a step starts (`https://modal.com/apps/...`), wh
 | `report.py` | Step 3: merges design and validation results. |
 | `run_pipeline.py` | Runs the steps in order and waits for validation to finish. |
 | `config_loader.py`, `volume_utils.py` | Small helpers (read YAML; copy files to/from the Volume). |
-| `configs/` | One YAML per run. |
+| `inputs/configs/` | One run YAML per run, plus BindCraft2 settings JSONs for each target. |
+| `inputs/structures/` | Target structure files (`.cif` / `.pdb`). |
 
 ## Adding a step or a tool
 

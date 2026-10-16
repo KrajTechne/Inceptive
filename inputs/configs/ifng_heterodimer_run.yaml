@@ -1,0 +1,25 @@
+# Interferon-gamma heterodimer binder design. BindCraft2 settings: interferon_gamma_heterodimer.json;
+# target structure: inputs/structures/interferon_gamma_heterodimer.cif (found by file name).
+#   python run_pipeline.py --config inputs/configs/ifng_heterodimer_run.yaml --dry-run
+
+run_name: ifng_heterodimer_trial
+
+design:
+  bindcraft_json: inputs/configs/interferon_gamma_heterodimer.json
+  gpu: A100
+  timeout_hours: 3
+
+selection:
+  top_n: 4
+  binder_chain: B            # CHECK on the first run: the target structure itself has a chain B
+
+validate:
+  models: [of3, esmfold2]
+  seeds: [0]
+  num_samples: 5
+  gpu_type: H100
+
+report:
+  min_iptm: 0.8
+  min_ipsae: 0.61
+  min_contact_pass_fraction: 1.0

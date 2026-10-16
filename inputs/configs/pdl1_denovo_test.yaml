@@ -1,6 +1,6 @@
 # One file per run. Each step reads its own section; run_name is shared.
-#   python -m modal run run_design.py     --config configs/pdl1_denovo_test.yaml
-#   python -m modal run run_validation.py --config configs/pdl1_denovo_test.yaml
+#   python -m modal run run_design.py     --config inputs/configs/pdl1_denovo_test.yaml
+#   python -m modal run run_validation.py --config inputs/configs/pdl1_denovo_test.yaml
 # Add --dry-run to either to print the plan without launching anything.
 # (On Windows set PYTHONUTF8=1 first, otherwise Modal's CLI crashes printing a checkmark.)
 

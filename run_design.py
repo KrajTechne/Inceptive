@@ -1,8 +1,8 @@
 """Step 1: run BindCraft2 on a Modal GPU.
 
 Usage:
-    python -m modal run run_design.py --config configs/pdl1_denovo_test.yaml
-    python -m modal run run_design.py --config configs/pdl1_denovo_test.yaml --dry-run
+    python -m modal run run_design.py --config inputs/configs/pdl1_denovo_test.yaml
+    python -m modal run run_design.py --config inputs/configs/pdl1_denovo_test.yaml --dry-run
 
 Results are saved on the `inceptive-runs` Volume under <run_name>/design/.
 Re-running with the same run_name resumes where BindCraft2 left off.
@@ -12,8 +12,8 @@ import os
 import subprocess
 
 from config_loader import load_config, require_keys
-from modal_app import (RUNS_DIR, WEIGHTS_DIR, app, bindcraft_image,
-                       runs_volume, weights_volume)
+from modal_app import (LOCAL_STRUCTURES_DIR, RUNS_DIR, STRUCTURES_DIR, WEIGHTS_DIR,
+                       app, bindcraft_image, runs_volume, weights_volume)
 
 COMMIT_EVERY_SECONDS = 300  # save progress to the Volume this often
 
@@ -54,31 +54,60 @@ def design(run_name: str, bindcraft_settings: dict):
     return design_dir
 
 
+def build_bindcraft_settings(design_cfg):
+    """Settings for BindCraft2 = the optional JSON file, then the `bindcraft:` section on top.
+
+    Target structures are found by FILE NAME in inputs/structures/, so the paths written
+    inside a JSON (for example from Colab) do not matter. project_folder is always set
+    by run_design, whatever the JSON says.
+    """
+    settings = {}
+    if "bindcraft_json" in design_cfg:
+        with open(design_cfg["bindcraft_json"]) as f:
+            settings = json.load(f)
+    settings.update(design_cfg.get("bindcraft", {}))  # the run YAML wins over the JSON
+
+    for target in settings.get("targets", []):
+        if "target_path" not in target:
+            continue
+        file_name = os.path.basename(str(target["target_path"]).replace("\\", "/"))
+        if not os.path.exists(os.path.join(LOCAL_STRUCTURES_DIR, file_name)):
+            raise FileNotFoundError(f"Target structure '{file_name}' (target '{target.get('name')}') "
+                                    f"is not in {LOCAL_STRUCTURES_DIR}/. Put the file there.")
+        target["target_path"] = f"{STRUCTURES_DIR}/{file_name}"
+        print(f"Target structure: {file_name} -> {target['target_path']}")
+    settings.pop("project_folder", None)  # set automatically in the container
+    return settings
+
+
 # This runs on your own computer and launches the remote function.
 @app.local_entrypoint()
 def main(config: str, dry_run: bool = False):
     cfg = load_config(config)
     require_keys(cfg, ["run_name", "design"], where=config)
     run_name, design_cfg = cfg["run_name"], cfg["design"]
-    require_keys(design_cfg, ["gpu", "timeout_hours", "bindcraft"], where="design section")
+    require_keys(design_cfg, ["gpu", "timeout_hours"], where="design section")
+    if "bindcraft" not in design_cfg and "bindcraft_json" not in design_cfg:
+        raise KeyError("design section needs `bindcraft_json:` (a BindCraft2 settings file) and/or `bindcraft:`")
+    bindcraft_settings = build_bindcraft_settings(design_cfg)
 
     print(f"Run name : {run_name}")
     print(f"GPU      : {design_cfg['gpu']}   timeout: {design_cfg['timeout_hours']} h")
 
     # with_options sets compute from the config instead of the code. cpu and memory_gb are
-    # optional; set them for multi-GPU runs (see configs/pdl1_parallel_test.yaml).
+    # optional; set them for multi-GPU runs (see inputs/configs/pdl1_parallel_test.yaml).
     options = {"gpu": design_cfg["gpu"], "timeout": int(design_cfg["timeout_hours"] * 3600)}
     if "cpu" in design_cfg:
         options["cpu"] = design_cfg["cpu"]
     if "memory_gb" in design_cfg:
         options["memory"] = int(design_cfg["memory_gb"] * 1024)  # Modal wants MiB
     print(f"Modal options: {options}")
-    print(f"BindCraft2 settings:\n{json.dumps(design_cfg['bindcraft'], indent=2)}")
+    print(f"BindCraft2 settings:\n{json.dumps(bindcraft_settings, indent=2)}")
     if dry_run:
         print("Dry run, nothing launched.")
         return
 
     remote_design = design.with_options(**options)
-    out = remote_design.remote(run_name, design_cfg["bindcraft"])
+    out = remote_design.remote(run_name, bindcraft_settings)
     print(f"Done. Results on Volume 'inceptive-runs' at {out}")
     print(f"Download with: python -m modal volume get inceptive-runs {run_name} ./results")

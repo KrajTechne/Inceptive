@@ -1,0 +1,30 @@
+# IL-4 (apo) binder design. The BindCraft2 settings live in IL4_apo.json (next to this file);
+# the target structure is inputs/structures/IL4_apo.cif (found by file name).
+#   python run_pipeline.py --config inputs/configs/il4_apo_run.yaml --dry-run
+#   python run_pipeline.py --config inputs/configs/il4_apo_run.yaml
+
+run_name: il4_apo_trial   # results go to the inceptive-runs Volume under <run_name>/
+
+design:
+  bindcraft_json: inputs/configs/IL4_apo.json   # base BindCraft2 settings (paths inside it are ignored)
+  gpu: A100
+  timeout_hours: 3
+  # Anything under `bindcraft:` overrides the same key in the JSON, e.g.
+  # bindcraft:
+  #   number_of_final_designs: 10
+  #   max_trajectories: 100
+
+selection:
+  top_n: 4                   # best N designs from BindCraft2's 3_Ranked/!_Ranked.csv
+  binder_chain: B            # binder is chain B when the target is the single chain A
+
+validate:
+  models: [of3, esmfold2]
+  seeds: [0]
+  num_samples: 5
+  gpu_type: H100
+
+report:
+  min_iptm: 0.8
+  min_ipsae: 0.61
+  min_contact_pass_fraction: 1.0

@@ -2,9 +2,9 @@
 # BindCraft2 sees all GPUs in the container and starts design workers on each
 # by itself (and packs several per GPU if memory allows), so the only change from
 # a 1-GPU run is `gpu: A100:4` plus enough CPU/RAM to feed the workers.
-#   python run_pipeline.py --config configs/pdl1_parallel_test.yaml
+#   python run_pipeline.py --config inputs/configs/pdl1_parallel_test.yaml
 # Or just the design step:
-#   python -m modal run run_design.py --config configs/pdl1_parallel_test.yaml
+#   python -m modal run run_design.py --config inputs/configs/pdl1_parallel_test.yaml
 
 run_name: pdl1_parallel_test
 

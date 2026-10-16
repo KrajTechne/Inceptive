@@ -1,7 +1,7 @@
 """Step 3: merge BindCraft2 (design) and Optimus (validation) results into one table.
 
 Usage:
-    python report.py --config configs/pdl1_denovo_test.yaml
+    python report.py --config inputs/configs/pdl1_denovo_test.yaml
 
 Downloads the two result tables from the Volume, joins them on design name, and
 writes results/<run_name>/final_report.csv (also uploaded to <run_name>/final_report.csv
