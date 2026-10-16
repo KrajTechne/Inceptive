@@ -70,6 +70,12 @@ Notes on how the JSON is used:
 - **Structures are found by file name** in `inputs/targets/`. The directory written in `target_path` (for example a Colab or Drive path) and any `project_folder` are ignored and replaced automatically.
 - Keys under `design.bindcraft:` in the run YAML override the same keys in the JSON. This matters for Colab leftovers: `workers_per_gpu: 1` and `auto_multi_gpu: false` keep BindCraft2 on one worker and one GPU, so override them (for example `auto_multi_gpu: true`, `workers_per_gpu: auto`) when you ask for several GPUs.
 - Residue numbers in `hotspots` / `coldspots` follow BindCraft2's numbering of the structure you supplied. Check them if a structure does not start at residue 1.
+- **Structures with insertion codes (for example residue `122A`) or numbering that does not start at 1** are refused or confusing. Check and fix them with `structure_helpers.py`:
+  ```bash
+  python structure_helpers.py check inputs/targets/my_target.cif
+  python structure_helpers.py renumber inputs/targets/my_target.cif --out inputs/targets/my_target_1idx.cif --start 1 --chain A --coldspots "11-25,55-67"
+  ```
+  It writes a new file (the original is untouched) and prints your hotspots/coldspots converted to the new numbering, confirming they select the same residues. Use the printed numbers in the JSON.
 - `selection.binder_chain` is the chain BindCraft2 gives the binder in its output files (`B` when the target is the single chain `A`); check it on the first run of a target with several chains.
 
 ## Where things are stored
@@ -107,6 +113,7 @@ Run links are also printed when a step starts (`https://modal.com/apps/...`), wh
 | `report.py` | Step 3: merges design and validation results. |
 | `run_pipeline.py` | Runs the steps in order and waits for validation to finish. |
 | `config_loader.py`, `volume_utils.py` | Small helpers (read YAML; copy files to/from the Volume). |
+| `structure_helpers.py` | Clean target structures: find insertion codes, renumber residues, convert hotspots/coldspots. |
 | `inputs/configs/` | One run YAML per run, plus BindCraft2 settings JSONs for each target. |
 | `inputs/targets/` | Target structure files (`.cif` / `.pdb`). |
 

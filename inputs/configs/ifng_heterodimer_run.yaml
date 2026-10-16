@@ -1,13 +1,20 @@
-# Interferon-gamma heterodimer binder design. BindCraft2 settings: interferon_gamma_heterodimer.json;
-# target structure: inputs/targets/interferon_gamma_heterodimer.cif (found by file name).
+# Interferon-gamma heterodimer binder design. BindCraft2 settings: interferon_gamma_heterodimer_1idx.json;
+# target structure: inputs/targets/interferon_gamma_heterodimer_1idx.cif (found by file name).
+# The original .cif has insertion codes (residues 122A-122G), which BindCraft2 refuses to load, and
+# numbering that starts at 0. interferon_gamma_heterodimer_1idx.cif was made with
+#   python structure_helpers.py renumber inputs/targets/interferon_gamma_heterodimer.cif #       --out inputs/targets/interferon_gamma_heterodimer_1idx.cif --start 1 --chain A --coldspots "<original coldspots>"
+# so the coldspots in the JSON are the original 11-25,55-67,99-107,131-145,175-187,219-227 converted
+# to the new numbering (same residues).
 #   python run_pipeline.py --config inputs/configs/ifng_heterodimer_run.yaml --dry-run
 
-run_name: ifng_heterodimer_trial
+run_name: ifng_heterodimer_1idx_trial
 
 design:
-  bindcraft_json: inputs/configs/interferon_gamma_heterodimer.json
+  bindcraft_json: inputs/configs/interferon_gamma_heterodimer_1idx.json
   gpu: A100
   timeout_hours: 3
+  bindcraft:
+    max_trajectories: 10     # small cap for a first trial run
 
 selection:
   top_n: 4
