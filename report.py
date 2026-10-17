@@ -12,7 +12,8 @@ import os
 
 import pandas as pd
 
-from config_loader import load_config, require_keys
+from config_loader import (final_report_volume_path, load_config, local_results_dir,
+                           require_keys, validation_volume_dir)
 from volume_utils import volume_get, volume_put
 
 # Columns kept from BindCraft2's !_Ranked.csv
@@ -63,25 +64,25 @@ def main():
     require_keys(cfg["report"], ["min_iptm", "min_ipsae", "min_contact_pass_fraction"], where="report section")
     run_name = cfg["run_name"]
 
-    results_dir = os.path.join("results", run_name)
+    results_dir = local_results_dir(cfg)
     ranked_path = os.path.join(results_dir, "!_Ranked.csv")
     summary_path = os.path.join(results_dir, "validation_summary.csv")
     if not volume_get(f"{run_name}/design/3_Ranked/!_Ranked.csv", ranked_path):
         raise SystemExit("Could not download the design results. Has run_design.py finished?")
-    if not volume_get(f"{run_name}/validation/validation_summary.csv", summary_path):
+    if not volume_get(f"{validation_volume_dir(cfg)}/validation_summary.csv", summary_path):
         raise SystemExit("Could not download the validation results. Has run_validation.py finished?")
 
     report = merge_results(pd.read_csv(ranked_path), pd.read_csv(summary_path), cfg["report"])
 
     out_path = os.path.join(results_dir, "final_report.csv")
     report.to_csv(out_path, index=False)
-    volume_put(out_path, f"{run_name}/final_report.csv")
+    volume_put(out_path, final_report_volume_path(cfg))
 
     show = ["rank", "design", "length", "i_pDAE", "passes_validation"] + [
         c for c in report.columns if c.endswith(("_iptm", "_ipsae"))]
     print(report[show].to_string(index=False))
     print(f"\n{int(report['passes_validation'].sum())} of {len(report)} designs passed validation.")
-    print(f"Saved {out_path} (and to the Volume at {run_name}/final_report.csv)")
+    print(f"Saved {out_path} (and to the Volume at {final_report_volume_path(cfg)})")
 
 
 if __name__ == "__main__":

@@ -17,7 +17,8 @@ import time
 
 import pandas as pd
 
-from config_loader import load_config, require_keys
+from config_loader import (load_config, local_results_dir, require_keys,
+                           validation_volume_dir)
 from volume_utils import volume_get
 
 
@@ -31,24 +32,24 @@ def run_step(title, command):
                          f"use --skip-design / --skip-validation to avoid repeating finished steps.")
 
 
-def count_finished_jobs(run_name):
+def count_finished_jobs(cfg):
     """How many validation jobs have finished (succeeded or failed), read from the Volume."""
     finished = 0
     for name in ("validation_results.csv", "failures.csv"):
-        local = os.path.join("results", run_name, name)
+        local = os.path.join(local_results_dir(cfg), name)
         if os.path.exists(local):
             os.remove(local)  # never count a stale copy from an earlier run
-        if volume_get(f"{run_name}/validation/{name}", local):
+        if volume_get(f"{validation_volume_dir(cfg)}/{name}", local):
             finished += len(pd.read_csv(local))
     return finished
 
 
-def wait_for_validation(run_name, expected_jobs, timeout_hours, poll_seconds):
+def wait_for_validation(cfg, expected_jobs, timeout_hours, poll_seconds):
     """Optimus runs in the background, so poll its result files until every job is accounted for."""
     print(f"\nWaiting for {expected_jobs} validation jobs (checking every {poll_seconds}s)...", flush=True)
     deadline = time.time() + timeout_hours * 3600
     while time.time() < deadline:
-        finished = count_finished_jobs(run_name)
+        finished = count_finished_jobs(cfg)
         print(f"  {finished} of {expected_jobs} jobs finished", flush=True)
         if finished >= expected_jobs:
             return
@@ -68,7 +69,9 @@ def main():
     args = parser.parse_args()
 
     cfg = load_config(args.config)
-    require_keys(cfg, ["run_name", "design", "selection", "validate", "report"], where=args.config)
+    # the design section is only needed when this run also does the design step
+    require_keys(cfg, ["run_name", "selection", "validate", "report"] + ([] if args.skip_design else ["design"]),
+                 where=args.config)
     run_name = cfg["run_name"]
 
     modal_run = [sys.executable, "-m", "modal", "run"]
@@ -94,11 +97,11 @@ def main():
     if not args.skip_validation:
         run_step(*steps[1][:2])
         # How many jobs to expect: designs picked x models x seeds (capped by Optimus's max_jobs).
-        designs = pd.read_csv(os.path.join("results", run_name, "designs_for_validation.csv"))
+        designs = pd.read_csv(os.path.join(local_results_dir(cfg), "designs_for_validation.csv"))
         validate_cfg = cfg["validate"]
         expected = len(designs) * len(validate_cfg["models"]) * len(validate_cfg["seeds"])
         expected = min(expected, validate_cfg.get("max_jobs", 200))
-        wait_for_validation(run_name, expected, args.timeout_hours, args.poll_seconds)
+        wait_for_validation(cfg, expected, args.timeout_hours, args.poll_seconds)
     run_step(*steps[3][:2])
 
 

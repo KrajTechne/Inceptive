@@ -9,7 +9,7 @@ What it does:
      and builds the CSV that Optimus expects.
   2. The CSV and an Optimus config are saved on your machine in results/<run_name>/.
   3. Optimus (the optimus/ submodule) is launched, with its outputs sent to the
-     same `inceptive-runs` Volume, in <run_name>/validation/.
+     same `inceptive-runs` Volume, in <run_name>/validation/ (or <run_name>/<validate.output_name>/).
 """
 import io
 import os
@@ -18,7 +18,8 @@ import sys
 
 import yaml
 
-from config_loader import load_config, require_keys
+from config_loader import (load_config, local_results_dir, require_keys,
+                           validation_volume_dir)
 from modal_app import (RUNS_DIR, RUNS_VOLUME_NAME, app, bridge_image,
                        runs_volume)
 
@@ -58,12 +59,12 @@ def main(config: str, dry_run: bool = False):
     require_keys(selection, ["top_n", "binder_chain"], where="selection section")
 
     # Optimus reads this as its --config file. input and output_dir are filled in for you.
-    results_dir = os.path.join("results", run_name)
+    results_dir = local_results_dir(cfg)
     csv_path = os.path.abspath(os.path.join(results_dir, "designs_for_validation.csv"))
     optimus_cfg = {
-        **cfg["validate"],
+        **{k: v for k, v in cfg["validate"].items() if k != "output_name"},  # output_name is ours, not Optimus's
         "input": csv_path,
-        "output_dir": f"{run_name}/validation",
+        "output_dir": validation_volume_dir(cfg),
     }
     print(f"Run name  : {run_name}")
     print(f"Selection : top {selection['top_n']} designs, binder chain {selection['binder_chain']}")
@@ -90,5 +91,5 @@ def main(config: str, dry_run: bool = False):
          "modal_run_validation.py", "--config", optimus_cfg_path],
         cwd="optimus", env=env, check=True,
     )
-    print(f"Validation running. Results will appear at {run_name}/validation/ on Volume '{RUNS_VOLUME_NAME}'.")
-    print(f"Check with: python -m modal volume ls {RUNS_VOLUME_NAME} {run_name}/validation")
+    print(f"Validation running. Results will appear at {validation_volume_dir(cfg)}/ on Volume '{RUNS_VOLUME_NAME}'.")
+    print(f"Check with: python -m modal volume ls {RUNS_VOLUME_NAME} {validation_volume_dir(cfg)}")
