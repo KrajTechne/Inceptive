@@ -3,6 +3,7 @@
 Usage:
     python -m modal run run_design.py --config inputs/configs/pdl1_denovo_test.yaml
     python -m modal run run_design.py --config inputs/configs/pdl1_denovo_test.yaml --dry-run
+    python -m modal run --detach run_design.py --config inputs/configs/pdl1_denovo_test.yaml --spawn   # returns at once; safe to close the terminal
 
 Results are saved on the `inceptive-runs` Volume under <run_name>/design/.
 Re-running with the same run_name resumes where BindCraft2 left off.
@@ -82,7 +83,7 @@ def build_bindcraft_settings(design_cfg):
 
 # This runs on your own computer and launches the remote function.
 @app.local_entrypoint()
-def main(config: str, dry_run: bool = False):
+def main(config: str, dry_run: bool = False, spawn: bool = False):
     cfg = load_config(config)
     require_keys(cfg, ["run_name", "design"], where=config)
     run_name, design_cfg = cfg["run_name"], cfg["design"]
@@ -108,6 +109,14 @@ def main(config: str, dry_run: bool = False):
         return
 
     remote_design = design.with_options(**options)
+    if spawn:
+        # .spawn() starts the job and returns at once, so this terminal can be closed.
+        # Launch with `modal run --detach` so Modal keeps the job running after we exit.
+        call = remote_design.spawn(run_name, bindcraft_settings)
+        print(f"Spawned design run '{run_name}' (function call {call.object_id}). It keeps running without this terminal.")
+        print(f"Results will appear on Volume 'inceptive-runs' at {run_name}/design/")
+        print(f"Check with: python -m modal volume ls inceptive-runs {run_name}/design")
+        return
     out = remote_design.remote(run_name, bindcraft_settings)
     print(f"Done. Results on Volume 'inceptive-runs' at {out}")
     print(f"Download with: python -m modal volume get inceptive-runs {run_name} ./results")
