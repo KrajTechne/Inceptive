@@ -1,0 +1,26 @@
+# Re-run validation on the finished IL4 design run (il4_apo_100traj) to try Optimus's new
+# max_gpus / max_retries settings. There is no `design:` section on purpose: this file only
+# validates, so it cannot restart design. Results go to a separate folder, leaving the first
+# validation (il4_apo_100traj/validation) untouched.
+#   python run_pipeline.py --config inputs/configs/il4_apo_validation_retest.yaml --skip-design --dry-run
+#   python run_pipeline.py --config inputs/configs/il4_apo_validation_retest.yaml --skip-design
+
+run_name: il4_apo_100traj   # the design run whose designs are validated
+
+selection:
+  top_n: 4
+  binder_chain: B
+
+validate:
+  output_name: validation_retest   # results: <run_name>/validation_retest/ on the Volume
+  models: [of3, esmfold2]
+  seeds: [0]                       # same seed as the first validation, so results can be compared
+  num_samples: 5
+  gpu_type: H100
+  max_gpus: 4                      # 8 jobs run 4 at a time, then the next 4
+  max_retries: 1
+
+report:
+  min_iptm: 0.8
+  min_ipsae: 0.61
+  min_contact_pass_fraction: 1.0

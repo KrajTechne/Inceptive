@@ -43,7 +43,7 @@ run_pipeline.py chains the three and waits for validation to finish.
 | `report.py` | Step 3. Merge + pass/fail against `report:` thresholds |
 | `run_pipeline.py` | Runs steps in order; waits by counting finished jobs (results + failures rows) vs expected |
 | `config_loader.py`, `volume_utils.py` | YAML loading; `modal volume get/put` helpers |
-| `inputs/configs/` | Run YAMLs (`pdl1_*`, `il4_apo_run.yaml`, `ifng_heterodimer_run.yaml`) and BindCraft2 settings JSONs (`IL4_apo.json`, `interferon_gamma_heterodimer.json`) |
+| `inputs/configs/` | Run YAMLs (`pdl1_denovo_test.yaml` smoke test, `il4_apo_run.yaml`, `il4_apo_validation_retest.yaml`, `ifng_heterodimer_run.yaml`) and BindCraft2 settings JSONs (`IL4_apo.json`, `interferon_gamma_heterodimer_1idx.json`; the original IFN-γ JSON was removed, its coldspots 11-25,55-67,99-107,131-145,175-187,219-227 are in git history and were converted for the 1-indexed structure) |
 | `inputs/targets/` | Target `.cif`/`.pdb` files; mounted into the design container at start-up (no image rebuild) |
 
 ## 4. Facts learned along the way
@@ -72,14 +72,14 @@ run_pipeline.py chains the three and waits for validation to finish.
 | 2 | BindCraft2 on Modal (PD-L1, 1×A100) | Done: 2 designs from 8 trajectories |
 | 3 | Optimus validation launched from our repo | Done: 4 jobs (2 designs × of3/esmfold2), 0 failures |
 | 4 | Bridge (BindCraft2 `.cif` → Optimus CSV) | Done: chain B verified |
-| 5 | End to end + report | Done: fresh run `pdl1_e2e_test` ran unattended; both designs passed |
+| 5 | End to end + report | Done: a fresh PD-L1 run (`pdl1_e2e_test`, config since removed as a duplicate of `pdl1_denovo_test.yaml`) ran unattended; both designs passed |
 | 6 | Hardening | README done. Tests deferred. Resume/retry not yet exercised |
 | 7 | Parallel design | Config support added (`gpu: "A100:4"`, `cpu`, `memory_gb`); not yet run. See §6 |
 | 8 | More targets / modalities | Wiring done and dry-run OK for IL-4 apo and IFN-γ heterodimer (JSON + structures from the user); no GPU run yet |
 
 ## 6. Next steps
 
-1. **Run `inputs/configs/pdl1_parallel_test.yaml`** (4×A100). Check in the log: the `campaign fan-out` line lists workers across GPUs 0–3, `nvidia-smi`-style memory notes, and throughput vs the 1-GPU run (trajectories per hour). If a worker runs out of GPU memory, set `workers_per_gpu: 1` or 2 in `design.bindcraft`.
+1. ~~Parallel design test~~ Done 2026-10-16/17: IL4 and IFN-γ ran on 4×A100 (8 and 4 BindCraft2 workers; IL4 accepted 4 designs after 21 trajectories, IFN-γ accepted 0 of 60). `pdl1_parallel_test.yaml` was removed; `il4_apo_run.yaml` is the 4-GPU example.
 2. **New targets (IL-4 apo, IFN-γ heterodimer)**: wiring done (2026-10-16): `design.bindcraft_json` loads the user's JSON, structures are found by file name in `inputs/targets/`, run YAML keys override JSON keys. Open items before the first real runs: (a) IFN-γ JSON targets chain A only of a two-chain file (A 243 res, B 242 res, numbering starts at 0): confirm that is intended and that the coldspot numbers match BindCraft2's numbering; (b) Colab leftovers `workers_per_gpu: 1` / `auto_multi_gpu: false` keep design on one GPU, so override them for parallel runs; (c) confirm the binder chain letter in the output (`selection.binder_chain`) for the two-chain target.
 3. **Other modalities** (VHH, cyclic peptide, scFv): confirm the bridge's chain assignment and sequence extraction on real output, since Optimus's script does not special-case them. Multi-chain binders (e.g. oligomers) would need the same check.
 4. **Optimus follow-ups (user's repo)**: add `.gitattributes` with `*.sh text eol=lf`; pin the unpinned dependencies; optionally let `run_validation` read its CSV from a Volume so our wrapper no longer needs a local round trip.

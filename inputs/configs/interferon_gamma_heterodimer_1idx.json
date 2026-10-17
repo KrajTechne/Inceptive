@@ -14,6 +14,7 @@
     100
   ],
   "save_loss_plots": false,
+  "initial_guess": true,
   "save_design_animations": true,
   "length_bucket_size": 32,
   "workers_per_gpu": 1,

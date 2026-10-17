@@ -34,6 +34,8 @@ validate:
   seeds: [0]
   num_samples: 5
   gpu_type: H100
+  max_gpus: 5                # validation jobs running at once (one GPU each); the rest wait their turn
+  max_retries: 1             # extra attempts for a job that errors (0 = never retry)
 
 # ---- Step 4: final report (report.py) ----
 # A design "passes validation" when EVERY validation model meets all three thresholds.

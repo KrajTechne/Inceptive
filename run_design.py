@@ -96,7 +96,7 @@ def main(config: str, dry_run: bool = False, spawn: bool = False):
     print(f"GPU      : {design_cfg['gpu']}   timeout: {design_cfg['timeout_hours']} h")
 
     # with_options sets compute from the config instead of the code. cpu and memory_gb are
-    # optional; set them for multi-GPU runs (see inputs/configs/pdl1_parallel_test.yaml).
+    # optional; set them for multi-GPU runs (see inputs/configs/il4_apo_run.yaml).
     options = {"gpu": design_cfg["gpu"], "timeout": int(design_cfg["timeout_hours"] * 3600)}
     if "cpu" in design_cfg:
         options["cpu"] = design_cfg["cpu"]

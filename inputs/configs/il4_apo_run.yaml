@@ -2,16 +2,23 @@
 # the target structure is inputs/targets/IL4_apo.cif (found by file name).
 #   python run_pipeline.py --config inputs/configs/il4_apo_run.yaml --dry-run
 #   python run_pipeline.py --config inputs/configs/il4_apo_run.yaml
+# Detached design only (terminal can close):
+#   python -m modal run --detach run_design.py --config inputs/configs/il4_apo_run.yaml --spawn
 
-run_name: il4_apo_trial   # results go to the inceptive-runs Volume under <run_name>/
+run_name: il4_apo_100traj   # results go to the inceptive-runs Volume under <run_name>/
 
 design:
   bindcraft_json: inputs/configs/IL4_apo.json   # base BindCraft2 settings (paths inside it are ignored)
-  gpu: A100
-  timeout_hours: 3
+  gpu: "A100:4"              # 4 GPUs; BindCraft2 starts design workers on all of them
+  cpu: 16                    # CPU cores and RAM for the container (workers need both)
+  memory_gb: 128
+  timeout_hours: 4           # hard stop; progress is saved every 5 min and re-running resumes
   # Anything under `bindcraft:` overrides the same key in the JSON.
   bindcraft:
-    max_trajectories: 10     # small cap for a first trial run
+    max_trajectories: 100
+    # The JSON has Colab settings that force ONE worker on ONE GPU; undo them for multi-GPU:
+    auto_multi_gpu: true
+    workers_per_gpu: auto
 
 selection:
   top_n: 4                   # best N designs from BindCraft2's 3_Ranked/!_Ranked.csv
@@ -22,6 +29,8 @@ validate:
   seeds: [0]
   num_samples: 5
   gpu_type: H100
+  max_gpus: 5                # validation jobs running at once (one GPU each); the rest wait their turn
+  max_retries: 1             # extra attempts for a job that errors (0 = never retry)
 
 report:
   min_iptm: 0.8
