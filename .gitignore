@@ -12,3 +12,6 @@ results/
 # Editor / OS
 .vscode/
 .DS_Store
+
+# Local run notes and findings (not tracked)
+experiments/
