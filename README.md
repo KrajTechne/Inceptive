@@ -72,7 +72,7 @@ Set `validate.output_name` (default `validation`) to send a validation run to it
 
 Notes on how the JSON is used:
 - **Structures are found by file name** in `inputs/targets/`. The directory written in `target_path` (for example a Colab or Drive path) and any `project_folder` are ignored and replaced automatically.
-- Keys under `design.bindcraft:` in the run YAML override the same keys in the JSON. This matters for Colab leftovers: `workers_per_gpu: 1` and `auto_multi_gpu: false` keep BindCraft2 on one worker and one GPU, so override them (for example `auto_multi_gpu: true`, `workers_per_gpu: auto`) when you ask for several GPUs.
+- **Keep all BindCraft2 settings in the JSON** (trajectories, binder lengths, worker settings). To use several GPUs, the JSON needs `"auto_multi_gpu": true` and `"workers_per_gpu": "auto"`; values like `false` and `1` (common in Colab setups) keep BindCraft2 on one worker and one GPU even when the run asks for four. A `design.bindcraft:` section in the run YAML is optional and overrides the same keys in the JSON for that run only, for example `max_trajectories: 10` for a quick trial.
 - Residue numbers in `hotspots` / `coldspots` follow BindCraft2's numbering of the structure you supplied. Check them if a structure does not start at residue 1.
 - **Structures with insertion codes (for example residue `122A`) or numbering that does not start at 1** are refused or confusing. Check and fix them with `structure_helpers.py`:
   ```bash
