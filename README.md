@@ -54,7 +54,7 @@ One YAML per run, in `inputs/configs/`. Each step reads its own section; `run_na
 |---|---|---|
 | `run_name` | all steps | Results go to `<run_name>/` on the Volume and `results/<run_name>/` locally. |
 | `design` | `run_design.py` | `gpu` (e.g. `A100`, or `A100:4` for 4 GPUs), `timeout_hours`, optional `cpu` / `memory_gb`, and the BindCraft2 settings: `bindcraft_json:` (path to a BindCraft2 settings JSON) and/or `bindcraft:` (inline; wins over the JSON). See "Adding a new target". |
-| `selection` | `run_validation.py` | `top_n` best designs to validate, and `binder_chain` (BindCraft2 writes the binder as chain `B`, target as `A`). |
+| `selection` | `run_validation.py` | `top_n` best designs to validate (optional: leave it out to validate every ranked design), and `binder_chain` (BindCraft2 writes the binder as chain `B`, target as `A`). |
 | `validate` | `run_validation.py` | Passed straight to Optimus as its config: `models` (`of3`, `native_af3`, `esmfold2`), `seeds`, `num_samples`, `gpu_type`, etc. Also `max_gpus` (jobs running at once, one GPU each; default 5), `max_retries` (extra attempts for a job that errors; default 1), and our own `output_name` (see below). |
 | `report` | `report.py` | Pass thresholds: `min_iptm`, `min_ipsae`, `min_contact_pass_fraction`. A design passes if every model meets all three. |
 

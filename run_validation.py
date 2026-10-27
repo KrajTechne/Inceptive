@@ -26,7 +26,7 @@ from modal_app import (RUNS_DIR, RUNS_VOLUME_NAME, app, bridge_image,
 
 # Runs remotely on a CPU. It reads the design results straight from the Volume.
 @app.function(image=bridge_image, volumes={RUNS_DIR: runs_volume})
-def build_designs_csv(run_name: str, top_n: int, binder_chain: str) -> str:
+def build_designs_csv(run_name: str, top_n, binder_chain: str) -> str:  # top_n: a number, or None for all designs
     import shutil
     import tempfile
 
@@ -35,7 +35,9 @@ def build_designs_csv(run_name: str, top_n: int, binder_chain: str) -> str:
 
     runs_volume.reload()  # make sure we see the latest saved design results
     ranked_dir = f"{RUNS_DIR}/{run_name}/design/3_Ranked"
-    ranked = pd.read_csv(f"{ranked_dir}/!_Ranked.csv").sort_values("rank").head(top_n)
+    ranked = pd.read_csv(f"{ranked_dir}/!_Ranked.csv").sort_values("rank")
+    if top_n is not None:
+        ranked = ranked.head(top_n)
     if ranked.empty:
         raise ValueError(f"No ranked designs found in {ranked_dir}")
 
@@ -56,7 +58,11 @@ def main(config: str, dry_run: bool = False):
     cfg = load_config(config)
     require_keys(cfg, ["run_name", "selection", "validate"], where=config)
     run_name, selection = cfg["run_name"], cfg["selection"]
-    require_keys(selection, ["top_n", "binder_chain"], where="selection section")
+    require_keys(selection, ["binder_chain"], where="selection section")
+    # top_n is optional: leave it out to validate every ranked design.
+    top_n = selection.get("top_n")
+    if top_n is not None and (not isinstance(top_n, int) or top_n < 1):
+        raise SystemExit(f"selection.top_n must be a whole number of at least 1, or left out for all designs (got {top_n!r}).")
 
     # Optimus reads this as its --config file. input and output_dir are filled in for you.
     results_dir = local_results_dir(cfg)
@@ -67,14 +73,14 @@ def main(config: str, dry_run: bool = False):
         "output_dir": validation_volume_dir(cfg),
     }
     print(f"Run name  : {run_name}")
-    print(f"Selection : top {selection['top_n']} designs, binder chain {selection['binder_chain']}")
+    print(f"Selection : {'all designs' if top_n is None else f'top {top_n} designs'}, binder chain {selection['binder_chain']}")
     print(f"Optimus config:\n{yaml.safe_dump(optimus_cfg, sort_keys=False)}")
     if dry_run:
         print("Dry run, nothing launched.")
         return
 
     # 1. Build the CSV on Modal and save it locally.
-    csv_text = build_designs_csv.remote(run_name, selection["top_n"], selection["binder_chain"])
+    csv_text = build_designs_csv.remote(run_name, top_n, selection["binder_chain"])
     os.makedirs(results_dir, exist_ok=True)
     with open(csv_path, "w", newline="") as f:
         f.write(csv_text)
