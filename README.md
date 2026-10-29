@@ -54,9 +54,9 @@ One YAML per run, in `inputs/configs/`. Each step reads its own section; `run_na
 |---|---|---|
 | `run_name` | all steps | Results go to `<run_name>/` on the Volume and `results/<run_name>/` locally. |
 | `design` | `run_design.py` | `gpu` (e.g. `A100`, or `A100:4` for 4 GPUs), `timeout_hours`, optional `cpu` / `memory_gb`, and the BindCraft2 settings: `bindcraft_json:` (path to a BindCraft2 settings JSON) and/or `bindcraft:` (inline; wins over the JSON). See "Adding a new target". |
-| `selection` | `run_validation.py` | `top_n` best designs to validate (optional: leave it out to validate every ranked design), and `binder_chain` (BindCraft2 writes the binder as chain `B`, target as `A`). |
+| `selection` | `run_validation.py` | `top_n` best designs to validate (optional: leave it out to validate every ranked design), optional `identical_segments` for a target that repeats inside one chain (e.g. `{B: "1-130,136-265"}`), and `binder_chain` (BindCraft2 writes the binder as chain `B`, target as `A`). |
 | `validate` | `run_validation.py` | Passed straight to Optimus as its config: `models` (`of3`, `native_af3`, `esmfold2`), `seeds`, `num_samples`, `gpu_type`, etc. Also `max_gpus` (jobs running at once, one GPU each; default 5), `max_retries` (extra attempts for a job that errors; default 1), and our own `output_name` (see below). |
-| `report` | `report.py` | Pass thresholds: `min_iptm`, `min_ipsae`, `min_contact_pass_fraction`. A design passes if every model meets all three. |
+| `report` | `report.py` | Pass thresholds: `min_iptm`, `min_ipsae`, `min_contact_pass_fraction`. A design passes if every model meets all three. Optional structure checks (applied only when set): `max_rmsd_pose`, `max_rmsd_fold` (in Å, against the BindCraft2 design) and `min_binder_plddt70_fraction`. `summary_file` picks another summary, e.g. the `validation_summary_rescored.csv` made by `rescore_validation.py`. |
 
 To start a new campaign, copy `inputs/configs/pdl1_denovo_test.yaml`, change `run_name` and the settings.
 
@@ -115,6 +115,8 @@ Run links are also printed when a step starts (`https://modal.com/apps/...`), wh
 | `run_design.py` | Step 1: BindCraft2 on a GPU. |
 | `run_validation.py` | Step 2: builds the Optimus input from the top designs, then launches Optimus. |
 | `report.py` | Step 3: merges design and validation results. |
+| `rescore_validation.py` | Optional: recompute the structure columns (RMSD, binder pLDDT fraction) of a finished validation from the saved predictions, CPU only. |
+| `design_table.py` | Builds the designs table Optimus expects; used by `run_validation.py` and `rescore_validation.py`. |
 | `run_pipeline.py` | Runs the steps in order and waits for validation to finish. |
 | `config_loader.py`, `volume_utils.py` | Small helpers (read YAML; copy files to/from the Volume). |
 | `structure_helpers.py` | Clean target structures: find insertion codes, renumber residues, convert hotspots/coldspots. |
