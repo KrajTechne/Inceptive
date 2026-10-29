@@ -127,7 +127,7 @@ Run links are also printed when a step starts (`https://modal.com/apps/...`), wh
 
 1. Add a `<step>:` section to the config with its settings.
 2. Copy `run_design.py` (a GPU step) or the `build_designs_csv` function in `run_validation.py` (a small CPU step) to a new `run_<step>.py`. Change the command it runs and which config section it reads.
-3. If it needs new software, add an image to `modal_app.py` (copy `bindcraft_image` or `bridge_image`). Remember to end the image with `.add_local_python_source("config_loader", "modal_app")` so the container can import our helpers.
+3. If it needs new software, add an image to `modal_app.py` (copy `bindcraft_image` or `bridge_image`). Remember to end the image with `.add_local_python_source("config_loader", "modal_app")` so the container can import our helpers (add `"design_table"` to that list if the container builds the designs table, as `bridge_image` does).
 4. Add it to the list in `run_pipeline.py`.
 
 Settings belong in the config, not in the Python files, so a new target or model should only need a YAML edit.
@@ -137,7 +137,7 @@ Settings belong in the config, not in the Python files, so a new target or model
 | Symptom | Cause / fix |
 |---|---|
 | `'charmap' codec can't encode character` | Set `PYTHONUTF8=1` (see setup). |
-| `No module named 'config_loader'` in the container | The image is missing `.add_local_python_source("config_loader", "modal_app")` at the end. |
+| `No module named 'config_loader'` (or `design_table`) in the container | The image is missing `.add_local_python_source("config_loader", "modal_app")` at the end, with `"design_table"` added if the container uses it. |
 | `$'\r': command not found` while building Optimus's image | Windows line endings; see setup. |
 | Optimus results landed in `structure-prediction-outputs` | `OPTIMUS_OUTPUTS_VOLUME` was not set. `run_validation.py` sets it to `inceptive-runs` for you; set it yourself if you call Optimus directly. |
 | Design finishes with 0 accepted designs | The filters are strict. Raise `max_trajectories` and re-run with the same `run_name`; it resumes. |
