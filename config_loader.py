@@ -52,3 +52,20 @@ def final_report_volume_path(cfg):
     name = validation_name(cfg)
     suffix = "" if name == DEFAULT_VALIDATION_NAME else f"_{name}"
     return f"{cfg['run_name']}/final_report{suffix}.csv"
+
+
+# --- Which designs to validate -------------------------------------------------
+def selection_settings(cfg, where="config"):
+    """(top_n, binder_chain, identical_segments) from the `selection` section.
+
+    top_n is optional: leave it out to use every ranked design.
+    identical_segments is optional: for a target that repeats inside one chain, e.g. two copies joined by a
+    linker, name the repeats per target chain: {B: "1-130,136-265"} (Optimus labels the target chain B).
+    """
+    selection = cfg["selection"]
+    require_keys(selection, ["binder_chain"], where=f"selection section of {where}")
+    top_n = selection.get("top_n")
+    if top_n is not None and (not isinstance(top_n, int) or top_n < 1):
+        raise SystemExit(f"selection.top_n must be a whole number of at least 1, or left out for all designs (got {top_n!r}).")
+    segments = {str(chain): str(text) for chain, text in (selection.get("identical_segments") or {}).items()}
+    return top_n, selection["binder_chain"], segments

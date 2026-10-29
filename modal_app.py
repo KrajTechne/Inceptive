@@ -17,6 +17,7 @@ weights_volume = modal.Volume.from_name("alphafold2-weights", create_if_missing=
 # Where each Volume appears inside the running container.
 RUNS_DIR = "/runs"        # one subfolder per run: /runs/<run_name>/...
 WEIGHTS_DIR = "/weights"  # model weights, downloaded once and reused
+OPTIMUS_RUNS_DIR = "/outputs"  # the same runs Volume as Optimus sees it (its OUTPUTS_MOUNT); used for reference structures
 
 # Target structures (.cif/.pdb) you put in inputs/targets/ are copied into the
 # design container at start-up, so a new structure never triggers an image rebuild.
@@ -60,5 +61,6 @@ bridge_image = (
     .pip_install("biotite", "gemmi", "pandas", "numpy", "pyyaml")
     .add_local_file("optimus/designs_from_structures.py", "/root/designs_from_structures.py")
     .add_local_file("optimus/StrucTools.py", "/root/StrucTools.py")
-    .add_local_python_source("config_loader", "modal_app")
+    .add_local_file("optimus/validation_core.py", "/root/validation_core.py")   # re-scoring (rescore_validation.py)
+    .add_local_python_source("config_loader", "modal_app", "design_table")
 )
