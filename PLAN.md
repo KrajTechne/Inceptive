@@ -7,7 +7,7 @@ Status (2026-10-15): the pipeline works end to end on PD-L1. Design (BindCraft2)
 One command takes a config and produces ranked binders that have been independently re-predicted by other structure models. All persistent state lives on Modal Volumes.
 
 ```
-inputs/configs/<run>.yaml
+inputs/configs_pipeline/<run>.yaml
    │
    ├─ run_design.py       BindCraft2 on a Modal GPU
    │     └─► inceptive-runs:/<run>/design/3_Ranked/{*.cif, !_Ranked.csv}
@@ -30,7 +30,7 @@ run_pipeline.py chains the three and waits for validation to finish.
 - **Volumes**: `inceptive-runs` (everything per run) and `alphafold2-weights` (AF2 parameters, downloaded once).
 - **Validation models**: OpenFold3 (`of3`) + ESMFold2. AF3 weights are not used (licensing).
 - **Optimus is used unmodified except one upstream change**: the outputs Volume name is configurable via `OPTIMUS_OUTPUTS_VOLUME` (merged in Optimus PR #7). We call its CLI as a subprocess rather than importing it.
-- **Code principles**: short single-purpose files, plain functions, Modal lines commented, all tunables in `inputs/configs/`, `--dry-run` on every step, copy-paste to add a step.
+- **Code principles**: short single-purpose files, plain functions, Modal lines commented, all tunables in `inputs/configs_pipeline/` and `inputs/configs_bc2/`, `--dry-run` on every step, copy-paste to add a step.
 - **Skipped for now**: automated tests (decided to defer).
 
 ## 3. As-built layout
@@ -43,7 +43,7 @@ run_pipeline.py chains the three and waits for validation to finish.
 | `report.py` | Step 3. Merge + pass/fail against `report:` thresholds |
 | `run_pipeline.py` | Runs steps in order; waits by counting finished jobs (results + failures rows) vs expected |
 | `config_loader.py`, `volume_utils.py` | YAML loading; `modal volume get/put` helpers |
-| `inputs/configs/` | Run YAMLs (`pdl1_denovo_test.yaml` smoke test, `il4_apo_run.yaml`, `il4_apo_validation_retest.yaml`, `ifng_heterodimer_run.yaml`) and BindCraft2 settings JSONs (`IL4_apo.json`, `interferon_gamma_heterodimer_1idx.json`; the original IFN-γ JSON was removed, its coldspots 11-25,55-67,99-107,131-145,175-187,219-227 are in git history and were converted for the 1-indexed structure) |
+| `inputs/configs_pipeline/`, `inputs/configs_bc2/` | Run YAMLs (`configs_pipeline`) (`pdl1_denovo_test.yaml` smoke test, `il4_apo_run.yaml`, `il4_apo_run_mixed.yaml`, `ifng_heterodimer_cold_run.yaml`, `ifng_heterodimer_no_cold_run.yaml`, `ifng_heterodimer_cold_old_commit_run.yaml`) and BindCraft2 settings JSONs (`configs_bc2`: `IL4_apo.json`, `IL4_apo_mixed.json`, `interferon_gamma_heterodimer_sc.json`, `interferon_gamma_heterodimer_sc_no_cold.json`) |
 | `inputs/targets/` | Target `.cif`/`.pdb` files; mounted into the design container at start-up (no image rebuild) |
 
 ## 4. Facts learned along the way

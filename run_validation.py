@@ -1,8 +1,8 @@
 """Step 2: validate the best BindCraft2 designs with Optimus.
 
 Usage:
-    python -m modal run run_validation.py --config inputs/configs/pdl1_denovo_test.yaml
-    python -m modal run run_validation.py --config inputs/configs/pdl1_denovo_test.yaml --dry-run
+    python -m modal run run_validation.py --config inputs/configs_pipeline/pdl1_denovo_test.yaml
+    python -m modal run run_validation.py --config inputs/configs_pipeline/pdl1_denovo_test.yaml --dry-run
 
 What it does:
   1. A small CPU function on Modal reads the top N designs (or all, if selection.top_n is left out)

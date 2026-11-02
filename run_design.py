@@ -1,9 +1,9 @@
 """Step 1: run BindCraft2 on a Modal GPU.
 
 Usage:
-    python -m modal run run_design.py --config inputs/configs/pdl1_denovo_test.yaml
-    python -m modal run run_design.py --config inputs/configs/pdl1_denovo_test.yaml --dry-run
-    python -m modal run --detach run_design.py --config inputs/configs/pdl1_denovo_test.yaml --spawn   # returns at once; safe to close the terminal
+    python -m modal run run_design.py --config inputs/configs_pipeline/pdl1_denovo_test.yaml
+    python -m modal run run_design.py --config inputs/configs_pipeline/pdl1_denovo_test.yaml --dry-run
+    python -m modal run --detach run_design.py --config inputs/configs_pipeline/pdl1_denovo_test.yaml --spawn   # returns at once; safe to close the terminal
 
 Results are saved on the `inceptive-runs` Volume under <run_name>/design/.
 Re-running with the same run_name resumes where BindCraft2 left off.
@@ -96,7 +96,7 @@ def main(config: str, dry_run: bool = False, spawn: bool = False):
     print(f"GPU      : {design_cfg['gpu']}   timeout: {design_cfg['timeout_hours']} h")
 
     # with_options sets compute from the config instead of the code. cpu and memory_gb are
-    # optional; set them for multi-GPU runs (see inputs/configs/il4_apo_run.yaml).
+    # optional; set them for multi-GPU runs (see inputs/configs_pipeline/il4_apo_run.yaml).
     options = {"gpu": design_cfg["gpu"], "timeout": int(design_cfg["timeout_hours"] * 3600)}
     if "cpu" in design_cfg:
         options["cpu"] = design_cfg["cpu"]

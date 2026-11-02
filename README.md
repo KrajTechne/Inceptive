@@ -5,7 +5,7 @@ Protein design with BindCraft2, RFDiffusion, etc. and leverages Optimus for Opti
 A protein binder design pipeline that runs on [Modal](https://modal.com):
 
 ```
-inputs/configs/<run>.yaml
+inputs/configs_pipeline/<run>.yaml
    │
    ├─ run_design.py      BindCraft2 designs binders on a GPU
    ├─ run_validation.py  picks the top designs, Optimus re-predicts them with other models
@@ -30,16 +30,16 @@ modal setup                                    # log in to Modal (once)
 ## Run it
 
 ```bash
-python run_pipeline.py --config inputs/configs/pdl1_denovo_test.yaml --dry-run   # show the plan, run nothing
-python run_pipeline.py --config inputs/configs/pdl1_denovo_test.yaml             # run everything
+python run_pipeline.py --config inputs/configs_pipeline/pdl1_denovo_test.yaml --dry-run   # show the plan, run nothing
+python run_pipeline.py --config inputs/configs_pipeline/pdl1_denovo_test.yaml             # run everything
 ```
 
 Or one step at a time (each takes the same config file and has `--dry-run`):
 
 ```bash
-python -m modal run run_design.py     --config inputs/configs/pdl1_denovo_test.yaml
-python -m modal run run_validation.py --config inputs/configs/pdl1_denovo_test.yaml
-python report.py                      --config inputs/configs/pdl1_denovo_test.yaml
+python -m modal run run_design.py     --config inputs/configs_pipeline/pdl1_denovo_test.yaml
+python -m modal run run_validation.py --config inputs/configs_pipeline/pdl1_denovo_test.yaml
+python report.py                      --config inputs/configs_pipeline/pdl1_denovo_test.yaml
 ```
 
 `run_pipeline.py` also accepts `--skip-design` and `--skip-validation` to reuse finished results.
@@ -48,7 +48,7 @@ python report.py                      --config inputs/configs/pdl1_denovo_test.y
 
 ## The config file
 
-One YAML per run, in `inputs/configs/`. Each step reads its own section; `run_name` is shared and names the folder where everything is stored.
+One YAML per run, in `inputs/configs_pipeline/`. Each step reads its own section; `run_name` is shared and names the folder where everything is stored.
 
 | Section | Used by | What it does |
 |---|---|---|
@@ -58,17 +58,17 @@ One YAML per run, in `inputs/configs/`. Each step reads its own section; `run_na
 | `validate` | `run_validation.py` | Passed straight to Optimus as its config: `models` (`of3`, `native_af3`, `esmfold2`), `seeds`, `num_samples`, `gpu_type`, etc. Also `max_gpus` (jobs running at once, one GPU each; default 5), `max_retries` (extra attempts for a job that errors; default 1), and our own `output_name` (see below). |
 | `report` | `report.py` | Pass thresholds: `min_iptm`, `min_ipsae`, `min_contact_pass_fraction`. A design passes if every model meets all three. Optional structure checks (applied only when set): `max_rmsd_pose`, `max_rmsd_fold` (in Å, against the BindCraft2 design) and `min_binder_plddt70_fraction`. `summary_file` picks another summary, e.g. the `validation_summary_rescored.csv` made by `rescore_validation.py`. |
 
-To start a new campaign, copy `inputs/configs/pdl1_denovo_test.yaml`, change `run_name` and the settings.
+To start a new campaign, copy `inputs/configs_pipeline/pdl1_denovo_test.yaml`, change `run_name` and the settings.
 
 ### Validating the same designs again
 
-Set `validate.output_name` (default `validation`) to send a validation run to its own folder, `<run_name>/<output_name>/` on the Volume and `results/<run_name>/<output_name>/` locally, so earlier results are never overwritten or mistaken for the new run. A validation-only config can leave out the `design:` section, and `run_pipeline.py --skip-design` will not need it. See `inputs/configs/il4_apo_validation_retest.yaml`.
+Set `validate.output_name` (default `validation`) to send a validation run to its own folder, `<run_name>/<output_name>/` on the Volume and `results/<run_name>/<output_name>/` locally, so earlier results are never overwritten or mistaken for the new run. A validation-only config can leave out the `design:` section, and `run_pipeline.py --skip-design` will not need it. See `inputs/configs_pipeline/ifng_heterodimer_cold_old_commit_run.yaml`.
 
 ### Adding a new target
 
 1. Put the structure (`.cif` or `.pdb`) in `inputs/targets/`.
-2. Put the BindCraft2 settings JSON (a `targets:` list with `name`, `target_path`, `chains`, `hotspots`/`coldspots`, plus campaign settings) in `inputs/configs/`.
-3. Copy a run YAML such as `inputs/configs/il4_apo_run.yaml` and point `design.bindcraft_json` at the JSON.
+2. Put the BindCraft2 settings JSON (a `targets:` list with `name`, `target_path`, `chains`, `hotspots`/`coldspots`, plus campaign settings) in `inputs/configs_bc2/`.
+3. Copy a run YAML such as `inputs/configs_pipeline/il4_apo_run.yaml` and point `design.bindcraft_json` at the JSON.
 
 Notes on how the JSON is used:
 - **Structures are found by file name** in `inputs/targets/`. The directory written in `target_path` (for example a Colab or Drive path) and any `project_folder` are ignored and replaced automatically.
@@ -120,7 +120,8 @@ Run links are also printed when a step starts (`https://modal.com/apps/...`), wh
 | `run_pipeline.py` | Runs the steps in order and waits for validation to finish. |
 | `config_loader.py`, `volume_utils.py` | Small helpers (read YAML; copy files to/from the Volume). |
 | `structure_helpers.py` | Clean target structures: find insertion codes, renumber residues, convert hotspots/coldspots. |
-| `inputs/configs/` | One run YAML per run, plus BindCraft2 settings JSONs for each target. |
+| `inputs/configs_pipeline/` | One run YAML per run (Modal pipeline settings). |
+| `inputs/configs_bc2/` | BindCraft2 settings JSONs, one per target (`design.bindcraft_json` points here). |
 | `inputs/targets/` | Target structure files (`.cif` / `.pdb`). |
 
 ## Adding a step or a tool

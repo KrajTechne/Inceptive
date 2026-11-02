@@ -1,9 +1,9 @@
 """Run the whole pipeline: design -> validation -> report.
 
 Usage:
-    python run_pipeline.py --config inputs/configs/pdl1_denovo_test.yaml
-    python run_pipeline.py --config inputs/configs/pdl1_denovo_test.yaml --dry-run
-    python run_pipeline.py --config inputs/configs/pdl1_denovo_test.yaml --skip-design   # reuse finished design results
+    python run_pipeline.py --config inputs/configs_pipeline/pdl1_denovo_test.yaml
+    python run_pipeline.py --config inputs/configs_pipeline/pdl1_denovo_test.yaml --dry-run
+    python run_pipeline.py --config inputs/configs_pipeline/pdl1_denovo_test.yaml --skip-design   # reuse finished design results
 
 This is a plain Python script (not a Modal app). It just runs the same commands
 you would type by hand, one after the other, and waits for validation to finish

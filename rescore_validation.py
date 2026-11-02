@@ -1,8 +1,8 @@
 """Re-score finished validation results: recompute the structure columns from the saved predictions.
 
 Usage:
-    python -m modal run rescore_validation.py --config inputs/configs/ifng_heterodimer_no_cold_run.yaml
-    python -m modal run rescore_validation.py --config inputs/configs/ifng_heterodimer_no_cold_run.yaml --dry-run
+    python -m modal run rescore_validation.py --config inputs/configs_pipeline/ifng_heterodimer_no_cold_run.yaml
+    python -m modal run rescore_validation.py --config inputs/configs_pipeline/ifng_heterodimer_no_cold_run.yaml --dry-run
 
 Use it after validation has finished when the structure checks change (for example, you add
 selection.identical_segments, or Optimus gains a new column). It does NOT run any prediction: it reads the
