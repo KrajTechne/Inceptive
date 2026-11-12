@@ -16,3 +16,9 @@ results/
 # Local run notes and findings (not tracked)
 experiments/
 inputs/targets/
+
+# Local run configs (not tracked; files already committed stay tracked)
+inputs/configs_bc2/*.json
+inputs/configs_pipeline/*.yaml
+inputs/configs_rfd4/
+RFD4_PROTEINA.md
