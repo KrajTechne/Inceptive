@@ -1,0 +1,33 @@
+#!/bin/bash
+# Fake `apptainer` for Modal. RFD4-Proteina launches its refolding oracles with
+#   AF2:       apptainer exec --nv --env K=V ... --bind A:B ... <image> /opt/conda/bin/python <worker.py> <args>
+#   AF3 / OF3: apptainer run  --nv --env K=V ... --bind A:B ... <image> python <worker.py> <args>
+# Modal containers cannot run Apptainer, but the workers only need the right environment
+# variables, so this drops the container options and runs the command directly. With arguments,
+# `run` just executes them (the image's runscript ends in exec "$@"), so it is treated like `exec`.
+case "$1" in
+  exec|run) ;;
+  *) echo "apptainer shim: only 'exec' and 'run' are supported, got '$1'" >&2; exit 2 ;;
+esac
+shift
+# The OF3/AF3 image keeps its Python environment in /alphafold3_venv (plus hmmer). Inside the real image
+# these are on PATH, so the bare `python` in the AF3 command resolves to the venv. Only the child sees this.
+if [ -d /alphafold3_venv/bin ]; then
+  export PATH="/hmmer/bin:/alphafold3_venv/bin:$PATH"
+fi
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --nv) shift ;;
+    --bind) shift 2 ;;
+    --env)
+      kv="$2"; shift 2
+      case "$kv" in
+        LD_LIBRARY_PATH=*) ;;          # points at Apptainer's /.singularity.d/libs; not used here
+        *) export "$kv" ;;
+      esac ;;
+    -*) echo "apptainer shim: unsupported option $1" >&2; exit 2 ;;
+    *) break ;;
+  esac
+done
+shift   # the image argument
+exec "$@"
