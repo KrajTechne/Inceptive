@@ -7,15 +7,17 @@
       "coldspots" : "5-13,81-92"
     }
   ],
-  "number_of_final_designs": 4,
+  "number_of_final_designs": 500,
   "modality": "binder",
   "binder_lengths": [
-    60,
-    100
+    80,
+    120
   ],
   "save_loss_plots": false,
   "save_design_animations": true,
   "length_bucket_size": 32,
-  "workers_per_gpu": 1,
-  "auto_multi_gpu": false
+  "max_trajectories": 700,
+  "workers_per_gpu": "auto",
+  "auto_multi_gpu": true,
+  "termini_accessible": true
 }
