@@ -467,6 +467,9 @@ def compose_config(spec: dict, num_replicates, overrides: list, experiment=None)
         for key, node in oracles.items():
             if isinstance(node, dict) and "template_query" in node:
                 print(f"  oracle {key}: template_query = {node['template_query']!r}")
+        for key, node in oracles.items():
+            if isinstance(node, dict) and "required_tags_any" in node:
+                print(f"  oracle {key}: runs on tags {node['required_tags_any']}")
         # The ppi pass criterion reads this metric; an empty alignment mask silently drops it (and forces ppi.pass to 0).
         rm = (metrics.get("refolding_metrics") or {}) if isinstance(metrics, dict) else {}
         node = rm.get("refolded_target_backbone_aligned_binder_rmsd")
@@ -479,6 +482,62 @@ def compose_config(spec: dict, num_replicates, overrides: list, experiment=None)
     print("stderr tail:")
     print("\n".join(keep[-25:]))
     return r.returncode
+
+
+# CPU-only: build every example in the condition spec through RFD4's own loader (load, contig, conditions, finalize,
+# validation) and write the annotated CIFs, WITHOUT running the model. Catches a bad chain id, an empty selection, an
+# unknown condition name or a rejected contig before any GPU time, and shows what each condition ended up on.
+@app.function(image=rfd4_image, timeout=900)
+def check_spec(spec: dict):
+    from collections import Counter
+    from pathlib import Path
+
+    import numpy as np
+    from atomworks.io import parse
+    from atomworks.io.config import ParseConfig
+    from rfproteina.inference_utils.condition_spec import resolve_condition_spec_inputs
+
+    work = Path("/tmp/spec_check")
+    work.mkdir(parents=True, exist_ok=True)
+    spec_path = work / "spec.yaml"
+    with open(spec_path, "w") as f:
+        yaml.safe_dump(spec, f, sort_keys=False)
+    paths = resolve_condition_spec_inputs(spec_path, work / "cifs", validate=True)
+    for p in paths:
+        print(f"\n=== built {p.name} ({p.stat().st_size} bytes)")
+        aa = parse(str(p), config=ParseConfig.from_preset("minimal"))["asym_unit"][0]
+        cats = set(aa.get_annotation_categories())
+        iid = "chain_iid" if "chain_iid" in cats else "chain_id"
+        chains = np.asarray(aa.get_annotation(iid)).astype(str)
+        print("atoms per chain:", dict(Counter(chains.tolist())))
+        for c in sorted(set(chains)):
+            m = chains == c
+            seq = []
+            seen = set()
+            for rid, rn in zip(aa.res_id[m].tolist(), aa.res_name[m].tolist()):
+                if rid not in seen:
+                    seen.add(rid)
+                    seq.append(rn)
+            print(f"  chain {c}: {len(seq)} residues: {' '.join(seq[:12])}{' ...' if len(seq) > 12 else ''}")
+        # The written CIF carries one `_atom_site.condition_*` column per condition: count the values per chain.
+        lines = p.read_text().splitlines()
+        cols = [l.strip()[len("_atom_site."):] for l in lines if l.startswith("_atom_site.")]
+        start = next(i for i, l in enumerate(lines) if l.startswith("_atom_site.")) + len(cols)
+        rows = []
+        for l in lines[start:]:
+            if l.startswith(("loop_", "#")):
+                break
+            if l.strip():
+                rows.append(l.split())
+        chain_col = cols.index("auth_asym_id") if "auth_asym_id" in cols else cols.index("label_asym_id")
+        for name in [c for c in cols if c.startswith("condition_")]:
+            k = cols.index(name)
+            per_chain = {}
+            for r in rows:
+                if len(r) > k:
+                    per_chain.setdefault(r[chain_col], Counter())[r[k]] += 1
+            print(f"  {name}: " + "; ".join(f"{c}={dict(v)}" for c, v in sorted(per_chain.items())))
+    return [str(p) for p in paths]
 
 
 def build_spec(design_cfg):
@@ -502,7 +561,8 @@ def build_spec(design_cfg):
 
 # This runs on your own computer and launches the remote function.
 @app.local_entrypoint()
-def main(config: str, dry_run: bool = False, spawn: bool = False, check_config: bool = False):
+def main(config: str, dry_run: bool = False, spawn: bool = False, check_config: bool = False,
+         check_spec_only: bool = False):
     cfg = load_config(config)
     require_keys(cfg, ["run_name", "design"], where=config)
     run_name, design_cfg = cfg["run_name"], cfg["design"]
@@ -549,6 +609,11 @@ def main(config: str, dry_run: bool = False, spawn: bool = False, check_config: 
     print(f"RFD4 config file: {design_cfg.get('experiment', 'none (overrides only)')}")
     print(f"num_replicates (pipeline): {num_replicates}   extra overrides: {overrides}")
     print(f"RFD4 spec:\n{yaml.safe_dump(spec, sort_keys=False)}")
+    if check_spec_only:
+        # CPU only: build the condition spec through RFD4's loader, no model, no GPU.
+        check_spec.remote(spec)
+        print("Spec built cleanly.")
+        return
     if check_config:
         # CPU only: have Hydra compose the full config without running the model.
         rc = compose_config.remote(spec, num_replicates, overrides, experiment)
