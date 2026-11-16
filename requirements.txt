@@ -1,7 +1,6 @@
 modal
 pyyaml
-# Needed on your machine because Optimus checks its input locally before launching
-biotite
+biotite==1.7.1
 gemmi
 pandas
 numpy
