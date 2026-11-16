@@ -4,3 +4,5 @@ biotite==1.7.1
 gemmi
 pandas
 numpy
+molview
+py2Dmol
